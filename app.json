@@ -14,12 +14,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff",
-        "permissions": "CAMERA",
-                "buildType": "apk"
-
+        "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.cjimenez_20.LasCaliforniasApp"
     },
     "web": {
       "bundler": "metro",
@@ -47,11 +45,6 @@
       "eas": {
         "projectId": "3741e515-c479-4f55-8789-448577592fc4"
       }
-    },
-    "preview": {
-      "android": {
-        "buildType": "apk"
-      }
-    }
   }
+}
 }
