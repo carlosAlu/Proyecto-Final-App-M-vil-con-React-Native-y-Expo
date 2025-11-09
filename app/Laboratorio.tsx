@@ -148,9 +148,7 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     aspectRatio: 1,
-    // *** CAMBIO CLAVE AQUÍ: Azul Fuerte para el fondo del botón ***
     backgroundColor: '#003366', 
-    // ************************
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
@@ -167,9 +165,6 @@ const styles = StyleSheet.create({
     height: '90%',
     resizeMode: 'contain',
     borderRadius: 15,
-    // Aquí podemos añadir un borde blanco o dorado alrededor de la imagen si se desea
-    // borderWidth: 2, 
-    // borderColor: '#FFD700', 
   },
   label: {
     marginTop: 8,
