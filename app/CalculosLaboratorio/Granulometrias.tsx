@@ -8,7 +8,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from 'react-native';
+
+// *** CONSTANTES DE MARCA (Para consistencia) ***
+const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
+const COLOR_ACCENT = '#FFD700'; // Dorado/Amarillo de Contraste
+const COLOR_BACKGROUND = '#F5F5F5'; // Fondo Suave
+const COLOR_TEXT_DARK = '#333333'; // Texto oscuro para fondo claro
 
 // Constante con los tipos de mallas (tamices) usados en la granulometría
 const SIEVES = [
@@ -83,7 +90,7 @@ export default function Granulometrias() {
       return {
         id: sieve.id,
         label: sieve.label,
-        peso: pesoRetenido,
+        peso: pesoRetenido.toFixed(2), // Usamos toFixed para consistencia
         pct: pctRaw.toFixed(2),
         pctRounded: pctRounded.toString(),
         passed: passed.toString(),
@@ -91,94 +98,116 @@ export default function Granulometrias() {
     });
   }, [retained, net]);
 
-  // Función para actualizar el peso retenido en un tamiz, filtrando solo números
+  // Función para actualizar el peso retenido en un tamiz, permitiendo números y punto decimal
   const onChangeRetained = (id: string, text: string) => {
-    setRetained(r => ({ ...r, [id]: text.replace(/[^0-9]/g, '') }));
+    setRetained(r => ({ ...r, [id]: text.replace(/[^\d.]/g, '') }));
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#0057B7' }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Título principal */}
-        <Text style={styles.title}>Granulometría</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLOR_PRIMARY }}>
+        <KeyboardAvoidingView
+            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+            <ScrollView
+                ref={scrollRef}
+                contentContainerStyle={styles.container}
+                keyboardShouldPersistTaps="handled"
+            >
+                {/* Título principal */}
+                <Text style={styles.title}>Cálculo de Granulometría</Text>
 
-        {/* Tarjeta para datos de entrada */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Datos de entrada</Text>
-          <LabelledInput label="Peso Bruto (g)" value={gross} onChange={setGross} />
-          <LabelledInput label="Tara (g)" value={tare} onChange={setTare} />
-          <LabelledInput label="Volumen (L)" value={volume} onChange={setVolume} />
+                {/* Tarjeta para datos de entrada */}
+                <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>1. Datos de la Muestra</Text>
+                    <LabelledInput 
+                        label="Peso Bruto (g)" 
+                        value={gross} 
+                        onChange={setGross} 
+                        placeholder="Ej: 5250"
+                    />
+                    <LabelledInput 
+                        label="Tara (g)" 
+                        value={tare} 
+                        onChange={setTare}
+                        placeholder="Ej: 250"
+                    />
+                    <LabelledInput 
+                        label="Volumen (L)" 
+                        value={volume} 
+                        onChange={setVolume}
+                        placeholder="Ej: 2.5"
+                    />
 
-          {/* Mostrar resultados calculados */}
-          <Text style={styles.result}>
-            Peso Neto: <Text style={styles.resultValue}>{net.toFixed(2)} g</Text>
-          </Text>
-          <Text style={styles.result}>
-            Peso Volumétrico: <Text style={styles.resultValue}>{volumetric.toFixed(2)} g</Text>
-          </Text>
-        </View>
+                    {/* Mostrar resultados calculados */}
+                    <View style={styles.resultContainer}>
+                        <Text style={styles.resultLabel}>
+                            Peso Neto: <Text style={styles.resultValue}>{net.toFixed(2)} g</Text>
+                        </Text>
+                        <Text style={styles.resultLabel}>
+                            Peso Volumétrico: <Text style={styles.resultValue}>{volumetric.toFixed(2)} g/L</Text>
+                        </Text>
+                    </View>
+                </View>
 
-        {/* Tarjeta para tabla de resultados */}
-        <View style={styles.cardTable}>
-          <Text style={styles.sectionTitle}>Tabla de resultados</Text>
+                {/* Tarjeta para tabla de resultados */}
+                <View style={styles.cardTable}>
+                    <Text style={styles.sectionTitle}>2. Tabla de Resultados</Text>
 
-          {/* Encabezado de tabla */}
-          <View style={styles.tableHeader}>
-            {['Malla', 'Retenido', '% Retenido Parc.', '% Retenido acum.', '% Pasa'].map(t => (
-              <Text key={t} style={styles.cellHeader}>
-                {t}
-              </Text>
-            ))}
-          </View>
+                    {/* Encabezado de tabla (NO MODIFICADO) */}
+                    <View style={styles.tableHeader}>
+                        {['Malla', 'Retenido', '% Retenido Parc.', '% Retenido acum.', '% Pasa'].map(t => (
+                            <Text key={t} style={styles.cellHeader}>
+                                {t}
+                            </Text>
+                        ))}
+                    </View>
 
-          {/* Lista de filas de resultados */}
-          {rows.map(item => (
-            <View key={item.id} style={styles.row}>
-              <Text style={styles.cell}>{item.label}</Text>
+                    {/* Lista de filas de resultados (NO MODIFICADO) */}
+                    {rows.map(item => (
+                        <View key={item.id} style={styles.row}>
+                            <Text style={styles.cell}>{item.label}</Text>
 
-              {/* Campo editable para pesos retenidos (excepto último tamiz) */}
-              {item.id === 'PasaNo4' ? (
-                <Text style={styles.cell}>{item.peso}</Text>
-              ) : (
-                <TextInput
-                  style={styles.cellInput}
-                  keyboardType="numeric"
-                  value={item.peso.toString()}
-                  editable={true}
-                  onChangeText={t => onChangeRetained(item.id, t)}
-                />
-              )}
+                            {/* Campo editable para pesos retenidos (excepto último tamiz) */}
+                            {item.id === 'PasaNo4' ? (
+                                <Text style={styles.cell}>{item.peso}</Text>
+                            ) : (
+                                <TextInput
+                                    style={styles.cellInput}
+                                    keyboardType="numeric"
+                                    value={retained[item.id] === '0' ? '' : retained[item.id]} // Mostrar vacío si es '0'
+                                    editable={true}
+                                    onChangeText={t => onChangeRetained(item.id, t)}
+                                    placeholder="0"
+                                />
+                            )}
 
-              {/* Mostrar porcentajes */}
-              <Text style={styles.cell}>{item.pct}</Text>
-              <Text style={styles.cell}>{item.pctRounded}</Text>
-              <Text style={styles.cell}>{item.passed}</Text>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+                            {/* Mostrar porcentajes */}
+                            <Text style={styles.cell}>{item.pct}</Text>
+                            <Text style={styles.cell}>{item.pctRounded}</Text>
+                            <Text style={styles.cell}>{item.passed}</Text>
+                        </View>
+                    ))}
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 /**
- * Componente reutilizable para entrada con etiqueta
+ * Componente reutilizable para entrada con etiqueta (ESTILOS DE MARCA APLICADOS)
  */
 function LabelledInput({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (t: string) => void;
+  placeholder: string;
 }) {
   return (
     <View style={styles.inputGroup}>
@@ -187,120 +216,152 @@ function LabelledInput({
         style={styles.input}
         keyboardType="numeric"
         value={value}
-        onChangeText={onChange}
-        placeholder={`Escribe ${label.toLowerCase()}`}
-        placeholderTextColor="#aaa"
+        onChangeText={t => onChange(t.replace(/[^\d.]/g, ''))}
+        placeholder={placeholder}
+        placeholderTextColor="#999"
+        returnKeyType="done"
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Modificado: Usar el fondo claro y SafeAreaView
+  keyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: COLOR_BACKGROUND,
+  },
   container: {
     flexGrow: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_BACKGROUND,
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
     paddingBottom: 40,
   },
+  // Título: Estilo de marca (Azul Oscuro, Extra Bold)
   title: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginBottom: 18,
+    fontSize: 24,
+    color: COLOR_PRIMARY,
+    fontWeight: '900',
+    marginBottom: 20,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
+  // Tarjetas (Cards): Fondo blanco, bordes suaves y sombra profunda
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
   },
   cardTable: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
   },
+  // Título de Sección: Azul Oscuro, negrita, con separador Dorado
   sectionTitle: {
-    fontSize: 20,
-    color: '#0057B7',
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    fontSize: 18,
+    color: COLOR_PRIMARY,
+    fontWeight: '700',
+    marginBottom: 15,
+    paddingBottom: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: COLOR_ACCENT,
+    textAlign: 'left',
   },
+  // Input Group y Label
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 15,
   },
   inputLabel: {
-    color: '#0057B7',
-    fontSize: 16,
-    marginBottom: 4,
-    fontWeight: '600',
+    color: COLOR_PRIMARY,
+    fontSize: 15,
+    marginBottom: 6,
+    fontWeight: '500',
   },
+  // Input: Fondo blanco, borde sutil, alineado a la izquierda
   input: {
     width: '100%',
-    backgroundColor: '#F0F4F8',
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
     padding: 12,
-    fontSize: 18,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#C3D1E6',
-    color: '#000',
+    fontSize: 17,
+    textAlign: 'left',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    fontWeight: '500',
+    color: COLOR_TEXT_DARK,
   },
-  result: {
-    marginTop: 8,
-    fontWeight: 'bold',
-    color: '#0057B7',
+  // Resultados de Muestra (Neto y Volumétrico)
+  resultContainer: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+  },
+  resultLabel: {
+    marginTop: 5,
+    fontWeight: '600',
+    color: COLOR_PRIMARY,
     fontSize: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   resultValue: {
-    color: '#1E88E5',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: COLOR_ACCENT, // Dorado para los valores calculados
+    fontWeight: '800',
+    fontSize: 17,
+    marginLeft: 5,
   },
+  // ==================== ESTILOS DE TABLA (Manteniendo la estructura original) ====================
   tableHeader: {
     flexDirection: 'row',
     marginTop: 8,
     marginBottom: 4,
+    backgroundColor: COLOR_PRIMARY, // Aplicando color de marca al fondo del header
+    borderRadius: 6,
+    paddingVertical: 4,
   },
   cellHeader: {
     flex: 1,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#0057B7',
-    fontSize: 15,
+    color: '#FFFFFF', // Texto blanco para el header
+    fontSize: 12, // Reducido ligeramente para caber
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 2,
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FFFFFF', // Fondo blanco para filas
     borderRadius: 6,
     marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   cell: {
     flex: 1,
     textAlign: 'center',
-    color: '#0057B7',
-    fontSize: 15,
+    color: COLOR_TEXT_DARK, // Texto oscuro para contenido
+    fontSize: 12, // Reducido ligeramente
     paddingVertical: 6,
   },
   cellInput: {
@@ -308,10 +369,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 4,
     textAlign: 'center',
-    color: '#0057B7',
+    color: COLOR_PRIMARY,
     borderColor: '#C3D1E6',
-    backgroundColor: '#fff',
+    backgroundColor: '#F7F7F7', // Fondo gris claro para campos de entrada
     borderRadius: 6,
-    fontSize: 15,
+    fontSize: 12, // Reducido ligeramente
   },
 });

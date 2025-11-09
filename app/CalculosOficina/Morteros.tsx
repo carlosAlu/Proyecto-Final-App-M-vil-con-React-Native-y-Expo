@@ -1,15 +1,23 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import { useNavigation } from 'expo-router';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   View,
 } from 'react-native';
-import { useNavigation } from 'expo-router';
+
+// *** CONSTANTES DE MARCA (Para consistencia) ***
+const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
+const COLOR_ACCENT = '#FFD700'; // Dorado/Amarillo de Contraste
+const COLOR_BACKGROUND = '#F5F5F5'; // Fondo Suave
+const COLOR_ERROR = '#D32F2F'; // Rojo de Error
+const COLOR_TEXT_DARK = '#333333'; // Texto oscuro para fondo claro
 
 /**
  * Componente principal para cálculo de morteros
@@ -45,17 +53,22 @@ export default function Morteros() {
 
     const cargaNum = parseFloat(carga);
     const fcNum = parseFloat(fc);
-    const areaConstante = 25;
+    
+    // Área de la pastilla de mortero (asumo 5cm x 5cm = 25 cm²)
+    const areaConstante = 25; 
 
     if (isNaN(cargaNum) || isNaN(fcNum) || cargaNum <= 0 || fcNum <= 0) {
       setError('Por favor ingresa valores válidos y mayores a cero.');
       return;
     }
 
-    const division = cargaNum / areaConstante;
-    const resistenciaFinal = division / fcNum;
+    // Cálculo de la resistencia simple: Carga / Área
+    const resistenciaSimple = cargaNum / areaConstante;
 
-    setResistencia(resistenciaFinal * 100);
+    // Resistencia en porcentaje: (Resistencia simple / f'c) * 100
+    const resistenciaFinal = (resistenciaSimple / fcNum) * 100;
+
+    setResistencia(resistenciaFinal);
 
     // Scroll hacia el resultado después de calcular
     setTimeout(() => {
@@ -63,42 +76,67 @@ export default function Morteros() {
     }, 100);
   };
 
+  // Se envuelve todo en SafeAreaView
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardAvoidingView}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLOR_PRIMARY }}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={styles.title}>Cálculo de Morteros</Text>
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Datos de entrada</Text>
-          <CustomInput label="Carga" value={carga} setValue={setCarga} />
-          <CustomInput label="F'C" value={fc} setValue={setFc} />
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Título principal con estilo de marca */}
+          <Text style={styles.title}>Cálculo de Resistencia de Morteros</Text>
+          
+          {/* Tarjeta de Entrada de Datos */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>1. Datos de Entrada</Text>
+            
+            {/* Input personalizado con mejor etiqueta */}
+            <CustomInput label="Carga Máxima (kg)" value={carga} setValue={setCarga} />
+            <CustomInput label="Resistencia Característica f'c (kgf/cm²)" value={fc} setValue={setFc} />
 
-          <TouchableOpacity style={styles.button} onPress={handleCalcular}>
-            <Text style={styles.buttonText}>Calcular</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Botón de Cálculo con estilo de marca (Dorado/Azul) */}
+            <TouchableOpacity 
+                style={[styles.button, { backgroundColor: COLOR_ACCENT }]} 
+                onPress={handleCalcular}
+            >
+              <Text style={[styles.buttonText, { color: COLOR_PRIMARY }]}>CALCULAR RESISTENCIA</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.cardResult}>
-          <Text style={styles.sectionTitle}>Resultado</Text>
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : (
-            resistencia !== null && (
-              <Text style={styles.resultText}>
-                Resistencia:{' '}
-                <Text style={styles.resultValue}>{resistencia.toFixed(4)}</Text>
-              </Text>
-            )
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Tarjeta de Resultados */}
+          <View style={styles.cardResult}>
+            <Text style={styles.sectionTitle}>2. Resultados</Text>
+            {error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : (
+              resistencia !== null && (
+                <>
+                   {/* Mostramos la Resistencia Simple (Carga / Área) */}
+                   <View style={styles.resultRow}>
+                        <Text style={styles.resultLabel}>Resistencia Simple (f'c):</Text>
+                        <Text style={styles.resultValueMajor}>
+                           {(parseFloat(carga) / 25).toFixed(2)} kgf/cm²
+                        </Text>
+                    </View>
+                    {/* Mostramos el Porcentaje de Resistencia Obtenida */}
+                    <View style={styles.finalResultRow}>
+                        <Text style={styles.resultLabelFinal}>% de Resistencia Obtenida:</Text>
+                        <Text style={styles.resultValueFinal}>
+                           {resistencia.toFixed(2)} %
+                        </Text>
+                    </View>
+                </>
+              )
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -122,124 +160,174 @@ function CustomInput({
         value={value}
         onChangeText={setValue}
         keyboardType="numeric"
-        placeholder={`Escribe ${label.toLowerCase()}`}
-        placeholderTextColor="#aaa"
+        placeholder={`Ej: ${label.includes('f\'c') ? '150' : '3800'}`} // Placeholders útiles
+        placeholderTextColor="#999"
+        returnKeyType="done"
       />
     </View>
   );
 }
 
+// =========================================================================
+// ESTILOS ESTANDARIZADOS DE LA MARCA
+// =========================================================================
 const styles = StyleSheet.create({
+  // Modificado: Usar el fondo claro y SafeAreaView
   keyboardAvoidingView: {
     flex: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_BACKGROUND,
   },
   container: {
     flexGrow: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_BACKGROUND,
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
     paddingBottom: 40,
   },
+  // Título: Estilo de marca (Azul Oscuro, Extra Bold)
   title: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginBottom: 18,
+    fontSize: 24,
+    color: COLOR_PRIMARY,
+    fontWeight: '900',
+    marginBottom: 20,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
+  // Tarjetas (Cards): Fondo blanco, bordes suaves y sombra profunda
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
   },
   cardResult: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
-    alignItems: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
+    alignItems: 'stretch', // Alineación para resultados en fila
   },
+  // Título de Sección: Azul Oscuro, negrita, con separador Dorado
   sectionTitle: {
-    fontSize: 20,
-    color: '#0057B7',
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    fontSize: 18,
+    color: COLOR_PRIMARY,
+    fontWeight: '700',
+    marginBottom: 15,
+    paddingBottom: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: COLOR_ACCENT,
+    textAlign: 'left',
   },
+  // Input Group y Label
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 18,
   },
   inputLabel: {
-    color: '#0057B7',
-    fontSize: 16,
-    marginBottom: 4,
-    fontWeight: '600',
+    color: COLOR_PRIMARY,
+    fontSize: 15,
+    marginBottom: 6,
+    fontWeight: '500',
   },
+  // Input: Fondo blanco, borde sutil, alineado a la izquierda
   input: {
     width: '100%',
-    backgroundColor: '#F0F4F8',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 18,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#C3D1E6',
-    color: '#000',
-  },
-  button: {
-    backgroundColor: '#0057B7',
-    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 4,
+    padding: 14,
+    fontSize: 17,
+    textAlign: 'left',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    fontWeight: '500',
+    color: COLOR_TEXT_DARK,
+  },
+  // Botón: Dorado con texto Azul Oscuro, redondeado, con sombra
+  button: {
+    // backgroundColor se establece inline con COLOR_ACCENT
+    paddingVertical: 14,
+    borderRadius: 30,
+    marginTop: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    // color se establece inline con COLOR_PRIMARY
+    fontSize: 18,
+    fontWeight: '900',
     letterSpacing: 1,
   },
-  resultText: {
-    color: '#0057B7',
-    fontSize: 18,
-    marginTop: 8,
-    textAlign: 'center',
-    fontWeight: '600',
+  // Resultados: Fila de resultado (etiqueta y valor)
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  resultValue: {
-    color: '#1E88E5',
-    fontWeight: 'bold',
+  finalResultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 2,
+    borderTopColor: COLOR_ACCENT, // Separador final dorado
+  },
+  // Etiqueta de resultado (texto normal)
+  resultLabel: {
+    color: '#333333',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  // Etiqueta de resultado final
+  resultLabelFinal: {
+    color: COLOR_PRIMARY,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  // Valor de resultado (la cifra)
+  resultValueMajor: {
+    color: COLOR_PRIMARY,
+    fontWeight: '700',
     fontSize: 18,
   },
+  // Valor de resultado final (el porcentaje)
+  resultValueFinal: {
+    color: COLOR_ERROR, // Rojo de alto impacto
+    fontWeight: '900',
+    fontSize: 24,
+  },
+  // Error: Estilo de error de marca
   errorText: {
-    color: '#E53935',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginTop: 10,
+    color: COLOR_ERROR,
+    fontWeight: '700',
+    fontSize: 16,
+    marginTop: 5,
+    padding: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
     textAlign: 'center',
   },
 });

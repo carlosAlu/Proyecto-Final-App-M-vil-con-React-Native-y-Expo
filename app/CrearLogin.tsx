@@ -6,10 +6,19 @@ import {
   Image,
   TextInput,
   ActivityIndicator,
+  Alert,
+  Platform,
+  SafeAreaView, // Añadido para mejor manejo del área segura
 } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// *** CONSTANTES DE MARCA ***
+const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
+const COLOR_ACCENT = '#FFD700'; // Dorado/Amarillo de Contraste
+const COLOR_BACKGROUND_LIGHT = '#F7F7F7'; // Fondo sutil para inputs
+const COLOR_TEXT_DARK = '#333333';
 
 /**
  * Componente para crear un nuevo usuario y almacenarlo en AsyncStorage.
@@ -31,13 +40,14 @@ export default function CrearLogin() {
 
   /**
    * Maneja la creación del usuario:
-   * - Valida campos
-   * - Revisa existencia previa en AsyncStorage
-   * - Guarda el nuevo usuario o muestra alertas de error
    */
   const handleLogin = async () => {
     if (!username || !password) {
-      alert('Por favor ingresa nombre y contraseña');
+      Alert.alert('Error de Registro', 'Por favor ingresa nombre y una contraseña.');
+      return;
+    }
+    if (password.length < 4) {
+      Alert.alert('Error de Contraseña', 'La contraseña debe tener al menos 4 caracteres.');
       return;
     }
 
@@ -51,7 +61,7 @@ export default function CrearLogin() {
       const exists = users.some((u: any) => u.nombre === username);
 
       if (exists) {
-        alert('El usuario ya existe');
+        Alert.alert('Registro Fallido', 'El usuario ya existe. Intenta con otro nombre.');
       } else {
         users.push({
           nombre: username,
@@ -60,116 +70,167 @@ export default function CrearLogin() {
         });
 
         await AsyncStorage.setItem('usuarios', JSON.stringify(users));
-        alert('Usuario creado correctamente');
+        Alert.alert('¡Éxito!', 'Perfil creado correctamente. Ya puedes iniciar sesión.');
         router.push('/Login');
       }
     } catch (error) {
-      alert('Error al crear usuario');
+      Alert.alert('Error', 'Error al crear usuario. Inténtalo de nuevo.');
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Función para regresar a la pantalla de login
+  const handleGoBack = () => {
+    router.push('/Login');
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.logoCircle}>
-        <Image
-          source={require('../assets/images/LogoLogin.png')}
-          style={styles.logo}
+    <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+        <View style={styles.logoCircle}>
+            <Image
+            source={require('../assets/images/LogoLogin.png')}
+            style={styles.logo}
+            />
+        </View>
+
+        <Text style={styles.title}>Crear Nuevo Perfil</Text>
+
+        <TextInput
+            style={styles.input}
+            placeholder="Nombre de Usuario"
+            placeholderTextColor="#999"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="words"
         />
-      </View>
 
-      <Text style={styles.title}>Crear Perfil</Text>
+        <TextInput
+            style={styles.input}
+            placeholder="Contraseña (4+ dígitos)"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'} // Mejor teclado en iOS
+            maxLength={10}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre Completo"
-        placeholderTextColor="#aaa"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-      />
+        {/* Botón para crear */}
+        <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+        >
+            {loading ? (
+                <ActivityIndicator size="small" color={COLOR_PRIMARY} />
+            ) : (
+                <Text style={styles.buttonText}>REGISTRAR PERFIL</Text>
+            )}
+        </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        placeholderTextColor="#aaa"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        keyboardType="numeric"
-      />
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.buttonText}>Crear</Text>
-      </TouchableOpacity>
-
-      {loading && (
-        <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
-      )}
-    </View>
+        {/* Botón para ir al login */}
+        <TouchableOpacity
+            style={[styles.button, styles.secondaryButton]}
+            onPress={handleGoBack}
+            disabled={loading}
+            activeOpacity={0.8}
+        >
+            <Text style={[styles.buttonText, { color: COLOR_ACCENT }]}>Ya tengo perfil</Text>
+        </TouchableOpacity>
+        </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLOR_PRIMARY,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_PRIMARY,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 30,
   },
+  // Logo Circle (Blanco con sombra fuerte)
   logoCircle: {
-    width: 210,
-    height: 210,
-    borderRadius: 110,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  logo: {
     width: 200,
     height: 200,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+    // Sombra más prominente para efecto flotante
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 15,
+  },
+  logo: {
+    width: '95%',
+    height: '95%',
     resizeMode: 'contain',
   },
   title: {
-    fontSize: 22,
-    color: 'white',
-    fontWeight: 'bold',
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 30,
     textAlign: 'center',
-    marginBottom: 20,
   },
+  // Inputs estilizados
   input: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    fontSize: 18,
+    width: '90%',
+    backgroundColor: COLOR_BACKGROUND_LIGHT,
+    borderRadius: 15, // Más redondeado
+    padding: 18,
+    marginBottom: 20,
+    fontSize: 17,
+    color: COLOR_TEXT_DARK,
+    fontWeight: '600',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    textAlign: 'center',
   },
+  // Botones base
   button: {
-    backgroundColor: '#1E90FF',
-    paddingVertical: 20,
-    paddingHorizontal: 60,
-    borderRadius: 25,
-    elevation: 3,
+    width: '90%',
+    paddingVertical: 18,
+    borderRadius: 30, // Botón tipo pastilla
+    elevation: 5,
     marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Sombra sutil de botón
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 5,
+  },
+  // Botón Principal: Dorado con texto Azul Oscuro
+  primaryButton: {
+    backgroundColor: COLOR_ACCENT,
+  },
+  // Botón Secundario: Transparente con borde/texto Dorado
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: COLOR_ACCENT,
+    marginTop: 15,
   },
   buttonText: {
-    fontSize: 22,
-    color: 'white',
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '900',
+    color: COLOR_PRIMARY, // Texto Azul Oscuro por defecto (para primary)
+    letterSpacing: 0.5,
   },
 });

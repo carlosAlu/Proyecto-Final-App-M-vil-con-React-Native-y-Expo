@@ -8,25 +8,27 @@ import {
   View,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView, // Añadido para mejor manejo del área segura
 } from 'react-native';
 import { useNavigation } from 'expo-router';
 
+// *** CONSTANTES DE MARCA ***
+const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
+const COLOR_ACCENT = '#FFD700'; // Dorado/Amarillo de Contraste
+const COLOR_BACKGROUND = '#F5F5F5'; // Fondo Suave
+const COLOR_ERROR = '#D32F2F'; // Rojo de Error
+const COLOR_TEXT_DARK = '#333333'; // Texto oscuro para fondo claro
+
 export default function Vigas() {
-  // Estado para almacenar la carga ingresada por el usuario
+  // ... (Estados y Referencias sin cambios)
   const [carga, setCarga] = useState('');
-  // Estado para almacenar el resultado del cálculo
   const [resultado, setResultado] = useState<number | null>(null);
-  // Estado para almacenar un mensaje de error si la entrada es inválida
   const [error, setError] = useState('');
-  // Estado para seleccionar el tipo de módulo de ruptura ('centro' o 'lateral')
   const [tipo, setTipo] = useState<'centro' | 'lateral'>('centro');
 
-  // Referencia para el ScrollView para poder hacer scroll automático al resultado
   const scrollRef = useRef<ScrollView>(null);
-  // Hook para la navegación (ocultar el header)
   const navigation = useNavigation();
 
-  // Oculta el header de la pantalla cuando se monta el componente
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -36,17 +38,22 @@ export default function Vigas() {
     setError('');
     setResultado(null);
     const c = parseFloat(carga);
+    
     // Validación para que la carga sea un número mayor que 0
     if (isNaN(c) || c <= 0) {
-      setError('Por favor ingresa un valor válido y mayor a cero.');
+      setError('Por favor ingresa un valor válido y mayor a cero para la Carga.');
       return;
     }
+    
     // Determina el factor según el tipo seleccionado
     const factor = tipo === 'centro' ? 42 : 45;
-    // Realiza el cálculo usando la fórmula dada
+    
+    // Realiza el cálculo usando la fórmula dada: (75 / carga) / factor
     const resultadoFinal = (75 / c) / factor;
-    // Guarda el resultado multiplicado por 100000
+    
+    // Guarda el resultado multiplicado por 100000 (el mismo factor que tenías)
     setResultado(resultadoFinal * 100000);
+    
     // Hace scroll automático al final para mostrar el resultado
     setTimeout(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
@@ -54,78 +61,93 @@ export default function Vigas() {
   };
 
   return (
-    // KeyboardAvoidingView para manejar el teclado y evitar que tape inputs
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#0057B7' }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+    // Usa SafeAreaView y el color de marca
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLOR_PRIMARY }}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={styles.title}>Cálculo de Vigas</Text>
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Datos de entrada</Text>
-          {/* Input personalizado para la carga */}
-          <CustomInput label="Carga" value={carga} setValue={setCarga} />
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Título principal con estilo de marca */}
+          <Text style={styles.title}>Cálculo de Módulo de Ruptura (Vigas)</Text>
+          
+          {/* Sección para ingresar datos (Tarjeta de Entradas) */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>1. Datos de Entrada</Text>
+            
+            {/* Input personalizado para la carga con mejor etiqueta */}
+            <CustomInput label="Carga (kg)" value={carga} setValue={setCarga} />
 
-          <Text style={styles.inputLabel}>Módulo de ruptura:</Text>
-          {/* Selector para elegir el tipo de módulo de ruptura */}
-          <View style={styles.selectorContainer}>
-            <TouchableOpacity
-              style={[styles.selector, tipo === 'centro' && styles.selectorSelected]}
-              onPress={() => setTipo('centro')}
-            >
-              <Text
-                style={[
-                  styles.selectorText,
-                  tipo === 'centro' && styles.selectorTextSelected,
-                ]}
+            <Text style={[styles.inputLabel, { marginTop: 10 }]}>Factor de Módulo de Ruptura:</Text>
+            
+            {/* Selector mejorado para elegir el tipo de módulo de ruptura */}
+            <View style={styles.selectorContainer}>
+              <TouchableOpacity
+                style={[styles.selector, tipo === 'centro' && styles.selectorSelected]}
+                onPress={() => setTipo('centro')}
               >
-                42
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.selector, tipo === 'lateral' && styles.selectorSelected]}
-              onPress={() => setTipo('lateral')}
-            >
-              <Text
-                style={[
-                  styles.selectorText,
-                  tipo === 'lateral' && styles.selectorTextSelected,
-                ]}
+                <Text style={styles.selectorSubtext}>Ruptura al Centro</Text>
+                <Text
+                  style={[
+                    styles.selectorText,
+                    tipo === 'centro' && styles.selectorTextSelected,
+                  ]}
+                >
+                  42
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.selector, tipo === 'lateral' && styles.selectorSelected]}
+                onPress={() => setTipo('lateral')}
               >
-                45
-              </Text>
+                <Text style={styles.selectorSubtext}>Ruptura Lateral</Text>
+                <Text
+                  style={[
+                    styles.selectorText,
+                    tipo === 'lateral' && styles.selectorTextSelected,
+                  ]}
+                >
+                  45
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Botón de cálculo, con estilo Dorado y texto Azul */}
+            <TouchableOpacity 
+                style={[styles.button, { backgroundColor: COLOR_ACCENT }]} 
+                onPress={handleCalcular}
+            >
+              <Text style={[styles.buttonText, { color: COLOR_PRIMARY }]}>CALCULAR RESISTENCIA</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Botón para disparar el cálculo */}
-          <TouchableOpacity style={styles.button} onPress={handleCalcular}>
-            <Text style={styles.buttonText}>Calcular</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Área para mostrar el resultado o mensaje de error */}
-        <View style={styles.cardResult}>
-          <Text style={styles.sectionTitle}>Resultado</Text>
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : (
-            resultado !== null && (
-              <Text style={styles.resultText}>
-                % resistencia: <Text style={styles.resultValue}>{resultado.toFixed(2)}</Text>
-              </Text>
-            )
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Área para mostrar el resultado o mensaje de error */}
+          <View style={styles.cardResult}>
+            <Text style={styles.sectionTitle}>2. Resultado</Text>
+            {error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : (
+              resultado !== null && (
+                <View style={styles.finalResultRow}>
+                    <Text style={styles.resultLabelFinal}>% de Resistencia Obtenida:</Text>
+                    <Text style={styles.resultValueFinal}>
+                        {resultado.toFixed(2)} %
+                    </Text>
+                </View>
+              )
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-// Componente reutilizable para inputs numéricos con etiqueta
+// Componente reutilizable para inputs numéricos con etiqueta (modificado)
 function CustomInput({
   label,
   value,
@@ -143,148 +165,185 @@ function CustomInput({
         value={value}
         onChangeText={setValue}
         keyboardType="numeric"
-        placeholder={`Escribe ${label.toLowerCase()}`}
-        placeholderTextColor="#aaa"
+        placeholder={`Ej: 3000`} // Placeholder más útil
+        placeholderTextColor="#999"
+        returnKeyType="done"
       />
     </View>
   );
 }
 
+// =========================================================================
+// ESTILOS MODIFICADOS
+// =========================================================================
 const styles = StyleSheet.create({
+  // Modificado: Usar las constantes de marca
+  keyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: COLOR_BACKGROUND,
+  },
   container: {
     flexGrow: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_BACKGROUND,
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
     paddingBottom: 40,
   },
+  // Título: Estilo de marca (Azul Oscuro, Extra Bold, Dorado)
   title: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginBottom: 18,
+    fontSize: 24,
+    color: COLOR_PRIMARY,
+    fontWeight: '900',
+    marginBottom: 20,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
+  // Tarjetas (Cards): Fondo blanco, bordes suaves y sombra profunda
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
   },
   cardResult: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
-    alignItems: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
+    alignItems: 'stretch',
   },
+  // Título de Sección: Azul Oscuro, negrita, con separador Dorado
   sectionTitle: {
-    fontSize: 20,
-    color: '#0057B7',
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    fontSize: 18,
+    color: COLOR_PRIMARY,
+    fontWeight: '700',
+    marginBottom: 15,
+    paddingBottom: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: COLOR_ACCENT,
+    textAlign: 'left',
   },
+  // Input Group y Label
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 18,
   },
   inputLabel: {
-    color: '#0057B7',
-    fontSize: 16,
-    marginBottom: 4,
-    fontWeight: '600',
+    color: COLOR_PRIMARY,
+    fontSize: 15,
+    marginBottom: 6,
+    fontWeight: '500',
   },
+  // Input: Fondo blanco, borde sutil, alineado a la izquierda
   input: {
     width: '100%',
-    backgroundColor: '#F0F4F8',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 18,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#C3D1E6',
-    color: '#000',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 17,
+    textAlign: 'left',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    fontWeight: '500',
+    color: COLOR_TEXT_DARK,
   },
+  // Selector: Diseño mejorado
   selectorContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
-    justifyContent: 'center',
+    marginBottom: 18,
+    justifyContent: 'space-between', // Separación en lugar de centrado
     width: '100%',
     gap: 10,
   },
   selector: {
     flex: 1,
-    backgroundColor: '#F0F4F8',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF', // Fondo blanco por defecto
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#C3D1E6',
+    borderWidth: 2, // Borde más notorio
+    borderColor: '#E0E0E0',
   },
   selectorSelected: {
-    backgroundColor: '#0057B7',
-    borderColor: '#0057B7',
+    backgroundColor: COLOR_PRIMARY, // Azul oscuro al seleccionar
+    borderColor: COLOR_PRIMARY,
   },
-  selectorText: {
-    color: '#0057B7',
-    fontSize: 18,
-    fontWeight: 'bold',
+  selectorSubtext: { // Texto pequeño para la descripción
+    color: COLOR_TEXT_DARK,
+    fontSize: 12,
+    marginBottom: 3,
+  },
+  selectorText: { // El valor (42 o 45)
+    color: COLOR_PRIMARY,
+    fontSize: 20,
+    fontWeight: '900',
   },
   selectorTextSelected: {
-    color: '#fff',
+    color: COLOR_ACCENT, // Dorado para el valor seleccionado
   },
+  // Botón: Dorado con texto Azul Oscuro, redondeado, con sombra
   button: {
-    backgroundColor: '#0057B7',
-    paddingVertical: 16,
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 4,
+    // backgroundColor se establece inline con COLOR_ACCENT
+    paddingVertical: 14,
+    borderRadius: 30,
+    marginTop: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    // color se establece inline con COLOR_PRIMARY
+    fontSize: 18,
+    fontWeight: '900',
     letterSpacing: 1,
   },
-  resultText: {
-    color: '#0057B7',
-    fontSize: 18,
-    marginTop: 8,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  resultValue: {
-    color: '#1E88E5',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  errorText: {
-    color: '#E53935',
-    fontWeight: 'bold',
-    fontSize: 18,
+  // Resultados: Fila de resultado final
+  finalResultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 10,
+    paddingTop: 15,
+    borderTopWidth: 2,
+    borderTopColor: COLOR_ACCENT, // Separador final dorado
+  },
+  resultLabelFinal: {
+    color: COLOR_PRIMARY,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  resultValueFinal: {
+    color: COLOR_ERROR, // Color de alto impacto para el valor clave
+    fontWeight: '900',
+    fontSize: 24,
+  },
+  // Error: Estilo de error de marca
+  errorText: {
+    color: COLOR_ERROR,
+    fontWeight: '700',
+    fontSize: 16,
+    marginTop: 5,
+    padding: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
     textAlign: 'center',
   },
 });

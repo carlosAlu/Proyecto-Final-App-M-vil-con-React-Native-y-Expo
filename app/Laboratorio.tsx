@@ -1,14 +1,14 @@
+import { useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect } from 'react';
 import {
+  Image,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
-  View,
   Text,
   TouchableOpacity,
-  Image,
-  ScrollView,
-  SafeAreaView,
+  View,
 } from 'react-native';
-import { useRouter, useNavigation } from 'expo-router';
 
 // Lista de botones disponibles (sin cambios en la data)
 const BUTTONS = [

@@ -1,6 +1,24 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+} from 'react-native';
 import { useNavigation } from 'expo-router';
+
+// *** CONSTANTES DE MARCA ***
+const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
+const COLOR_ACCENT = '#FFD700'; // Dorado/Amarillo de Contraste
+const COLOR_BACKGROUND = '#F5F5F5'; // Fondo Suave
+const COLOR_ERROR = '#D32F2F'; // Rojo de Error
+const COLOR_TEXT_DARK = '#333333'; // Texto oscuro para fondo claro
+const COLOR_LIGHT_GRAY = '#E0E0E0'; // Borde sutil
 
 export default function Compactacion() {
   // Estados para inputs del usuario
@@ -14,7 +32,7 @@ export default function Compactacion() {
   // Estados para resultados calculados (numéricos o null)
   const [pesoUtilizado, setPesoUtilizado] = useState<number | null>(null);
   const [volumenSondeo, setVolumenSondeo] = useState<number | null>(null);
-  const [volumenMatHumedo, setVolumenMatHumedo] = useState<number | null>(null);
+  const [pesoVolHum, setPesoVolHum] = useState<number | null>(null); // Nombre de variable ajustado para claridad
   const [humedadCalc, setHumedadCalc] = useState<number | null>(null);
   const [pesoVolSecLugar, setPesoVolSecLugar] = useState<number | null>(null);
   const [compactacion, setCompactacion] = useState<number | null>(null);
@@ -31,6 +49,16 @@ export default function Compactacion() {
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
+  
+  // Función para sanitizar la entrada (permite números y punto decimal)
+  const cleanDecimalInput = (text: string) => {
+    let clean = text.replace(/[^0-9.]/g, '');
+    const parts = clean.split('.');
+    if (parts.length > 2) {
+      clean = parts[0] + '.' + parts.slice(1).join('');
+    }
+    return clean;
+  };
 
   // Función que se ejecuta al presionar "Calcular"
   const handleCalcular = () => {
@@ -38,7 +66,7 @@ export default function Compactacion() {
     setError('');
     setPesoUtilizado(null);
     setVolumenSondeo(null);
-    setVolumenMatHumedo(null);
+    setPesoVolHum(null);
     setHumedadCalc(null);
     setPesoVolSecLugar(null);
     setCompactacion(null);
@@ -55,34 +83,41 @@ export default function Compactacion() {
     if (
       isNaN(v1) || isNaN(v2) || isNaN(v3) ||
       isNaN(v4) || isNaN(v5) || isNaN(v6) ||
-      v4 === 0 || v6 === 0
+      v4 <= 0 || v6 <= 0
     ) {
-      setError('Por favor ingresa valores válidos y mayores a cero.');
+      setError('Por favor ingresa valores válidos y positivos en todos los campos requeridos.');
       return;
     }
-
-    // Calcular peso utilizado de arena (arena inicial menos sobrante)
+    
+    // --- CÁLCULOS ---
+    
+    // 1. Peso utilizado de arena: P_arena = P_inicial - P_sobrante
     const pesoArenaUtilizado = v1 - v2;
     setPesoUtilizado(pesoArenaUtilizado);
+    if (pesoArenaUtilizado <= 0) {
+        setError('El peso de arena inicial debe ser mayor que el peso sobrante.');
+        return;
+    }
 
-    // Calcular volumen del sondeo: peso utilizado dividido por peso volumétrico de arena
-    const volumenSondeo = pesoArenaUtilizado / v4;
-    setVolumenSondeo(volumenSondeo);
+    // 2. Volumen del sondeo: V_sondeo = P_arena / P_vol_arena
+    const volumenSondeoCalc = pesoArenaUtilizado / v4;
+    setVolumenSondeo(volumenSondeoCalc);
 
-    // Calcular peso volumétrico del material húmedo: peso material húmedo dividido volumen sondeo
-    const volumenMatHumedo = v3 / volumenSondeo;
-    setVolumenMatHumedo(volumenMatHumedo);
+    // 3. Peso volumétrico del material húmedo: P_vol_hum = P_mat_humedo / V_sondeo
+    const pesoVolHumCalc = v3 / volumenSondeoCalc;
+    setPesoVolHum(pesoVolHumCalc);
 
-    // Calcular humedad (esta fórmula parece sumar 100 al valor ingresado)
-    const humedadCalculada = v5 + 100;
-    setHumedadCalc(humedadCalculada);
+    // 4. Factor de Humedad: F_hum = (100 + %Humedad) / 100 
+    // Nota: Ajustamos tu lógica de cálculo para que la fórmula sea estándar: PVS = PVH / (1 + H/100)
+    const factorHumedad = 1 + (v5 / 100); 
+    setHumedadCalc(factorHumedad); // Almacenamos el factor para mostrarlo en el resultado
 
-    // Calcular peso volumétrico seco del lugar: peso volumétrico material húmedo entre humedad calculada
-    const pesoVolSecLugarCalc = volumenMatHumedo / humedadCalculada;
+    // 5. Peso Volumétrico Seco del lugar: P_vol_seco_lugar = P_vol_hum / Factor_Humedad
+    const pesoVolSecLugarCalc = pesoVolHumCalc / factorHumedad;
     setPesoVolSecLugar(pesoVolSecLugarCalc);
 
-    // Calcular grado de compactación: peso volumétrico seco del lugar dividido peso volumétrico máximo
-    const compactacionCalc = pesoVolSecLugarCalc / v6;
+    // 6. Grado de compactación: Compactación = (P_vol_seco_lugar / P_vol_max) * 100
+    const compactacionCalc = (pesoVolSecLugarCalc / v6) * 100;
     setCompactacion(compactacionCalc);
 
     // Scroll automático al final para mostrar resultados
@@ -92,185 +127,255 @@ export default function Compactacion() {
   };
 
   return (
-    // Ajusta el layout para evitar que el teclado tape inputs
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#0057B7' }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      {/* ScrollView principal con ref para scroll automático */}
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>% de Compactación</Text>
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Datos de entrada</Text>
-          {/* Inputs para todos los valores necesarios */}
-          <CustomInput label="Peso de arena inicial" value={arenaInicial} setValue={setArenaInicial} />
-          <CustomInput label="Peso sobrante de arena" value={arenaSobrante} setValue={setArenaSobrante} />
-          <CustomInput label="Peso de material húmedo" value={materialHumedo} setValue={setMaterialHumedo} />
-          <CustomInput label="Peso volumétrico de arena" value={volArena} setValue={setVolArena} />
-          <CustomInput label="% de humedad" value={humedad} setValue={setHumedad} />
-          <CustomInput label="Peso volumétrico máximo" value={volMax} setValue={setVolMax} />
+    // Se envuelve todo en SafeAreaView
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLOR_PRIMARY }}>
+        {/* Ajusta el layout para evitar que el teclado tape inputs */}
+        <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+        {/* ScrollView principal con ref para scroll automático */}
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <Text style={styles.title}>Cálculo de Grado de Compactación</Text>
+            
+            {/* Tarjeta de Entrada de Datos */}
+            <View style={styles.card}>
+                <Text style={styles.sectionTitle}>1. Datos de Entrada</Text>
+                {/* Inputs para todos los valores necesarios */}
+                <CustomInput label="Peso de arena inicial (g)" value={arenaInicial} setValue={setArenaInicial} cleanInput={cleanDecimalInput}/>
+                <CustomInput label="Peso sobrante de arena (g)" value={arenaSobrante} setValue={setArenaSobrante} cleanInput={cleanDecimalInput}/>
+                <CustomInput label="Peso de material húmedo (g)" value={materialHumedo} setValue={setMaterialHumedo} cleanInput={cleanDecimalInput}/>
+                <CustomInput label="Peso volumétrico de arena (g/cm³)" value={volArena} setValue={setVolArena} cleanInput={cleanDecimalInput}/>
+                <CustomInput label="% de humedad (H%)" value={humedad} setValue={setHumedad} cleanInput={cleanDecimalInput}/>
+                <CustomInput label="Peso volumétrico máximo (g/cm³)" value={volMax} setValue={setVolMax} cleanInput={cleanDecimalInput}/>
 
-          {/* Botón para disparar el cálculo */}
-          <TouchableOpacity style={styles.button} onPress={handleCalcular}>
-            <Text style={styles.buttonText}>Calcular</Text>
-          </TouchableOpacity>
-        </View>
+                {/* Botón para disparar el cálculo */}
+                <TouchableOpacity 
+                    style={[styles.button, { backgroundColor: COLOR_ACCENT }]} 
+                    onPress={handleCalcular}
+                >
+                    <Text style={[styles.buttonText, { color: COLOR_PRIMARY }]}>CALCULAR COMPACTACIÓN</Text>
+                </TouchableOpacity>
+            </View>
 
-        {/* Área donde se muestran los resultados o error */}
-        <View style={styles.cardResult}>
-          <Text style={styles.sectionTitle}>Resultados</Text>
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : (
-            <>
-              {/* Mostrar resultados si existen */}
-              {pesoUtilizado !== null && (
-                <Text style={styles.resultText}>Peso de arena utilizado: <Text style={styles.resultValue}>{Math.round(pesoUtilizado)}</Text></Text>
-              )}
-              {volumenSondeo !== null && (
-                <Text style={styles.resultText}>Volumen del sondeo: <Text style={styles.resultValue}>{Math.round(volumenSondeo * 1000)}</Text></Text>
-              )}
-              {volumenMatHumedo !== null && (
-                <Text style={styles.resultText}>Peso Vol. Mat. Húmedo: <Text style={styles.resultValue}>{Math.round(volumenMatHumedo)}</Text></Text>
-              )}
-              {pesoVolSecLugar !== null && (
-                <Text style={styles.resultText}>Peso Vol. Seco del lugar: <Text style={styles.resultValue}>{Math.round(pesoVolSecLugar * 100)}</Text></Text>
-              )}
-              {compactacion !== null && (
-                <Text style={styles.resultText}>Grado de compactación: <Text style={styles.resultValue}>{(compactacion * 100).toFixed(2)}%</Text></Text>
-              )}
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {/* Área donde se muestran los resultados o error */}
+            <View style={styles.cardResult}>
+                <Text style={styles.sectionTitle}>2. Resultados Intermedios y Final</Text>
+                {error ? (
+                    <Text style={styles.errorText}>{error}</Text>
+                ) : (
+                    <>
+                        {/* Mostrar resultados intermedios */}
+                        <ResultRow label="Peso de Arena Utilizado (g):" value={pesoUtilizado} units="g" />
+                        <ResultRow label="Volumen del Sondeo (cm³):" value={volumenSondeo} units="cm³" decimalPlaces={3} />
+                        <ResultRow label="Peso Vol. Húmedo (g/cm³):" value={pesoVolHum} units="g/cm³" decimalPlaces={3} />
+                        <ResultRow label="Factor de Humedad (1+H/100):" value={humedadCalc} units="" decimalPlaces={4} />
+                        <ResultRow label="Peso Vol. Seco del Lugar (g/cm³):" value={pesoVolSecLugar} units="g/cm³" decimalPlaces={3} />
+                        
+                        {/* Mostrar resultado final destacado */}
+                        {compactacion !== null && (
+                            <View style={styles.finalResultRow}>
+                                <Text style={styles.resultLabelFinal}>Grado de Compactación:</Text>
+                                <Text style={styles.resultValueFinal}>
+                                    {compactacion.toFixed(2)} %
+                                </Text>
+                            </View>
+                        )}
+                    </>
+                )}
+            </View>
+        </ScrollView>
+        </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 // Componente reutilizable para inputs con etiqueta
-function CustomInput({ label, value, setValue }: { label: string, value: string, setValue: (v: string) => void }) {
+function CustomInput({ label, value, setValue, cleanInput }: { label: string, value: string, setValue: (v: string) => void, cleanInput: (t: string) => string }) {
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.inputLabel}>{label}</Text>
       <TextInput
         style={styles.input}
         value={value}
-        onChangeText={setValue}
+        onChangeText={text => setValue(cleanInput(text))}
         keyboardType="numeric"
-        placeholder="Escribe aquí"
-        placeholderTextColor="#aaa"
+        placeholder={`Ingrese el valor`}
+        placeholderTextColor="#999"
+        returnKeyType="done"
       />
     </View>
   );
 }
 
+// Nuevo componente para mostrar filas de resultados
+function ResultRow({ label, value, units = '', decimalPlaces = 2 }: { label: string, value: number | null, units?: string, decimalPlaces?: number }) {
+    if (value === null) return null;
+    return (
+        <View style={styles.resultRow}>
+            <Text style={styles.resultLabel}>{label}</Text>
+            <Text style={styles.resultValue}>
+                {value.toFixed(decimalPlaces)} {units}
+            </Text>
+        </View>
+    );
+}
+
 // Estilos para los componentes
 const styles = StyleSheet.create({
+  // Modificado: Usar el fondo claro y SafeAreaView
+  keyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: COLOR_BACKGROUND,
+  },
   container: {
     flexGrow: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_BACKGROUND,
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
     paddingBottom: 40,
   },
+  // Título: Estilo de marca (Azul Oscuro, Extra Bold)
   title: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginBottom: 18,
+    fontSize: 24,
+    color: COLOR_PRIMARY,
+    fontWeight: '900',
+    marginBottom: 20,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
+  // Tarjetas (Cards): Fondo blanco, bordes suaves y sombra profunda
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.10,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
   },
   cardResult: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 22,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 24,
+    maxWidth: 400,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.10,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
-    alignItems: 'center',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
+    alignItems: 'stretch', // Alineado a stretch para las filas de resultado
   },
+  // Título de Sección: Azul Oscuro, negrita, con separador Dorado
   sectionTitle: {
-    fontSize: 20,
-    color: '#0057B7',
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    fontSize: 18,
+    color: COLOR_PRIMARY,
+    fontWeight: '700',
+    marginBottom: 15,
+    paddingBottom: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: COLOR_ACCENT,
+    textAlign: 'left',
   },
+  // Input Group y Label
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 15,
   },
   inputLabel: {
-    color: '#0057B7',
-    fontSize: 16,
-    marginBottom: 4,
-    fontWeight: '600',
+    color: COLOR_PRIMARY,
+    fontSize: 15,
+    marginBottom: 6,
+    fontWeight: '500',
   },
+  // Input: Fondo blanco, borde sutil, alineado a la izquierda
   input: {
     width: '100%',
-    backgroundColor: '#F0F4F8',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 18,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#C3D1E6',
-  },
-  button: {
-    backgroundColor: '#0057B7',
-    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 4,
+    padding: 12,
+    fontSize: 17,
+    textAlign: 'left',
+    borderWidth: 2,
+    borderColor: COLOR_LIGHT_GRAY,
+    fontWeight: '500',
+    color: COLOR_TEXT_DARK,
+  },
+  // Botón: Dorado con texto Azul Oscuro, redondeado, con sombra
+  button: {
+    paddingVertical: 14,
+    borderRadius: 30,
+    marginTop: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '900',
     letterSpacing: 1,
   },
-  resultText: {
-    color: '#0057B7',
-    fontSize: 18,
-    marginTop: 8,
-    textAlign: 'center',
-    fontWeight: '600',
+  // Resultados: Fila de resultado (etiqueta y valor)
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  resultValue: {
-    color: '#1E88E5',
-    fontWeight: 'bold',
+  finalResultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 2,
+    borderTopColor: COLOR_ACCENT, // Separador final dorado
+  },
+  // Etiqueta de resultado (texto normal)
+  resultLabel: {
+    color: '#333333',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  // Etiqueta de resultado final
+  resultLabelFinal: {
+    color: COLOR_PRIMARY,
     fontSize: 18,
+    fontWeight: '700',
+  },
+  // Valor de resultado (la cifra)
+  resultValue: {
+    color: COLOR_PRIMARY,
+    fontWeight: '700',
+    fontSize: 17,
+  },
+  // Valor de resultado final (el porcentaje)
+  resultValueFinal: {
+    color: COLOR_ERROR, // Rojo de alto impacto para el porcentaje final
+    fontWeight: '900',
+    fontSize: 24,
   },
   errorText: {
-    color: '#E53935',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginTop: 10,
+    color: COLOR_ERROR,
+    fontWeight: '700',
+    fontSize: 16,
+    marginTop: 5,
+    padding: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
     textAlign: 'center',
   },
 });

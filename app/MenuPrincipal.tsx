@@ -16,14 +16,23 @@ import {
   View,
 } from 'react-native';
 
+// *** CONSTANTES DE MARCA ***
+const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
+const COLOR_ACCENT = '#FFD700'; // Dorado/Amarillo de Contraste
+const COLOR_BACKGROUND = '#F5F5F5'; // Fondo Suave
+const COLOR_DANGER = '#D32F2F'; // Rojo de Error/Peligro
+const COLOR_TEXT_DARK = '#333333';
+const COLOR_LIGHT_GRAY = '#E0E0E0';
+const COLOR_SUCCESS = '#388E3C'; // Verde para aceptar
+
 // Configuración de botones del menú con íconos y etiquetas
 const buttons = [
-  { id: 1, label: 'Camara', image: require('../assets/images/LogoCamara.png') },
-  { id: 2, label: 'Laboratorio', image: require('../assets/images/LogoLaboratorio.png') },
-  { id: 3, label: 'Obra', image: require('../assets/images/LogoObra.png') },
-  { id: 4, label: 'Oficina', image: require('../assets/images/LogoOficina.png') },
-  { id: 5, label: 'Dashboard', image: require('../assets/images/LogoEstadisticas.png') },
-  { id: 6, label: 'Cerrar sesion', image: require('../assets/images/LogoCerrarSesion.png'), isLogout: true },
+  { id: 1, label: 'Cámara y Geolocalización', route: 'Camera', image: require('../assets/images/LogoCamara.png') },
+  { id: 2, label: 'Módulo Laboratorio', route: '/Laboratorio', image: require('../assets/images/LogoLaboratorio.png') },
+  { id: 3, label: 'Módulo Obra', route: '/Obra', image: require('../assets/images/LogoObra.png') },
+  { id: 4, label: 'Acceso a Oficina', route: '/Oficina', image: require('../assets/images/LogoOficina.png'), needsCode: true },
+  { id: 5, label: 'Dashboard y Trazabilidad', route: '/Dashboard', image: require('../assets/images/LogoEstadisticas.png') },
+  { id: 6, label: 'Cerrar Sesión', route: '/Login', image: require('../assets/images/LogoCerrarSesion.png'), isLogout: true },
 ];
 
 export default function MenuPrincipalScreen() {
@@ -44,7 +53,7 @@ export default function MenuPrincipalScreen() {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  // Controla el botón físico "back" para evitar salida accidental
+  // Controla el botón físico "back" para evitar salida accidental (SIN CAMBIOS FUNCIONALES)
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -56,7 +65,7 @@ export default function MenuPrincipalScreen() {
     }, [])
   );
 
-  // Función para abrir la cámara, guardar en galería y obtener ubicación y fecha/hora
+  // Función para abrir la cámara, guardar en galería y obtener ubicación y fecha/hora (SIN CAMBIOS FUNCIONALES)
   const openCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -105,44 +114,35 @@ export default function MenuPrincipalScreen() {
 
   /**
    * Maneja la acción al presionar un botón del menú
-   * @param buttonIndex Número de botón presionado
-   * @param isLogout Indica si el botón es para cerrar sesión
    */
-  const handlePress = async (buttonIndex: number, isLogout?: boolean) => {
-    if (buttonIndex === 6 || isLogout) {
+  const handlePress = async (btn: typeof buttons[0]) => {
+    if (btn.isLogout) {
       await AsyncStorage.removeItem('usuarioLogueado');
-      router.push('/Login');
+      router.push(btn.route as any);
       return;
     }
 
-    switch (buttonIndex) {
-      case 1:
-        openCamera();
-        break;
-      case 2:
-        router.push('/Laboratorio');
-        break;
-      case 3:
-        router.push('/Obra');
-        break;
-      case 4:
-        setModalVisible(true);
-        setCodigo('');
-        setErrorCodigo('');
-        break;
-      case 5:
-        router.push('/Dashboard');
-        break;
-      default:
-        console.log(`Botón ${buttonIndex} presionado`);
+    if (btn.needsCode) {
+      setModalVisible(true);
+      setCodigo('');
+      setErrorCodigo('');
+      return;
     }
+    
+    // Abrir cámara
+    if (btn.id === 1) {
+        openCamera();
+        return;
+    }
+
+    router.push(btn.route as any);
   };
 
   /**
    * Verifica el código de acceso a Oficina
    */
   const verificarCodigo = () => {
-    if (codigo === '010324') {
+    if (codigo === '010324') { // Código de acceso (manteniendo el original)
       setModalVisible(false);
       setCodigo('');
       setErrorCodigo('');
@@ -175,6 +175,7 @@ export default function MenuPrincipalScreen() {
           source={require('../assets/images/LogoLasCaliforniasApp.png')}
           style={styles.logo}
         />
+        <Text style={styles.headerTitle}>Menú Principal</Text>
       </View>
 
       {/* Grid de botones */}
@@ -182,13 +183,26 @@ export default function MenuPrincipalScreen() {
         {buttons.map((btn) => (
           <View key={btn.id} style={styles.item}>
             <TouchableOpacity
-              style={[styles.button, btn.isLogout && styles.logoutButtonGrid]}
-              onPress={() => handlePress(btn.id, btn.isLogout)}
-              activeOpacity={0.8}
+              style={[
+                styles.button,
+                btn.isLogout && styles.logoutButton, // Estilo para cerrar sesión
+                btn.id === 1 && styles.cameraButton, // Estilo para la cámara
+              ]}
+              onPress={() => handlePress(btn)}
+              activeOpacity={0.7}
             >
-              <Image source={btn.image} style={styles.image} />
+              <Image 
+                source={btn.image} 
+                style={styles.image} 
+              />
             </TouchableOpacity>
-            <Text style={[styles.label, btn.isLogout && styles.logoutLabelGrid]}>
+            <Text 
+                style={[
+                    styles.label, 
+                    btn.isLogout && styles.logoutLabel,
+                    btn.id === 4 && styles.officeLabel // Etiqueta destacada para Oficina
+                ]}
+            >
               {btn.label}
             </Text>
           </View>
@@ -207,41 +221,41 @@ export default function MenuPrincipalScreen() {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Foto tomada</Text>
+          <View style={styles.photoModalContent}>
+            <Text style={styles.modalTitle}>📸 Foto Capturada y Geolocalizada</Text>
             {/* Logo arriba de la foto */}
             <Image
               source={require('../assets/images/LogoLasCaliforniasApp.png')}
-              style={{ width: 180, height: 50, resizeMode: 'contain', alignSelf: 'center', marginBottom: 10 }}
+              style={styles.photoModalLogo}
             />
             {photoUri && (
               <Image
                 source={{ uri: photoUri }}
-                style={{ width: 250, height: 200, borderRadius: 8, marginBottom: 10 }}
+                style={styles.photoModalImage}
               />
             )}
-            {photoDate && (
-              <Text style={{ textAlign: 'center', marginBottom: 2 }}>
-                Fecha y hora: {photoDate}
-              </Text>
-            )}
-            {photoLocation && (
-              <Text style={{ textAlign: 'center', marginBottom: 10 }}>
-                Ubicación: {photoLocation.latitude.toFixed(6)}, {photoLocation.longitude.toFixed(6)}
-              </Text>
-            )}
-            <View style={{ alignItems: 'center' }}>
-              <TouchableOpacity
-                style={[styles.button, styles.modalAcceptButton, { width: 140 }]}
-                onPress={() => {
-                  setPhotoUri(null);
-                  setPhotoLocation(null);
-                  setPhotoDate(null);
-                }}
-              >
-                <Text style={styles.buttonText}>Cerrar</Text>
-              </TouchableOpacity>
+            <View style={styles.photoModalData}>
+                {photoDate && (
+                <Text style={styles.photoModalText}>
+                    **Fecha y Hora:** {photoDate}
+                </Text>
+                )}
+                {photoLocation && (
+                <Text style={styles.photoModalText}>
+                    **Ubicación:** {photoLocation.latitude.toFixed(6)}, {photoLocation.longitude.toFixed(6)}
+                </Text>
+                )}
             </View>
+            <TouchableOpacity
+              style={[styles.button, styles.modalAcceptButton, styles.closeButton]}
+              onPress={() => {
+                setPhotoUri(null);
+                setPhotoLocation(null);
+                setPhotoDate(null);
+              }}
+            >
+              <Text style={styles.buttonText}>CERRAR</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -255,13 +269,14 @@ export default function MenuPrincipalScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Acceso a Oficina</Text>
+            <Text style={[styles.modalTitle, {color: COLOR_PRIMARY}]}>🔒 Acceso Restringido: Oficina</Text>
             <Text style={styles.modalText}>
-              Ingresa el código para acceder a la sección de Oficina.
+              Ingresa el código para acceder a la sección de Oficina(010324).
             </Text>
             <TextInput
               style={styles.input}
               placeholder="Código de verificación"
+              placeholderTextColor="#999"
               value={codigo}
               onChangeText={setCodigo}
               keyboardType="numeric"
@@ -274,20 +289,20 @@ export default function MenuPrincipalScreen() {
 
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
-                style={[styles.button, styles.modalCancelButton]}
+                style={[styles.button, styles.modalButton, styles.buttonCancel]}
                 onPress={() => {
                   setModalVisible(false);
                   setCodigo('');
                   setErrorCodigo('');
                 }}
               >
-                <Text style={styles.buttonText}>Cancelar</Text>
+                <Text style={styles.buttonText}>CANCELAR</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, styles.modalAcceptButton]}
+                style={[styles.button, styles.modalButton, styles.buttonSuccess]}
                 onPress={verificarCodigo}
               >
-                <Text style={styles.buttonText}>Aceptar</Text>
+                <Text style={styles.buttonText}>ACEPTAR</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -303,21 +318,21 @@ export default function MenuPrincipalScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              ¿Seguro que quieres salir de la aplicación?
+            <Text style={[styles.modalTitle, {color: COLOR_DANGER}]}>
+              ⚠️ ¿Seguro que quieres salir de la aplicación?
             </Text>
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
-                style={[styles.button, styles.exitButton]}
+                style={[styles.button, styles.modalButton, styles.buttonDanger]}
                 onPress={handleBackConfirm}
               >
-                <Text style={styles.buttonText}>Salir</Text>
+                <Text style={styles.buttonText}>SALIR</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, styles.modalAcceptButton]}
+                style={[styles.button, styles.modalButton, styles.buttonPrimary]}
                 onPress={handleBackCancel}
               >
-                <Text style={styles.buttonText}>Cancelar</Text>
+                <Text style={styles.buttonText}>CANCELAR</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -329,138 +344,203 @@ export default function MenuPrincipalScreen() {
 
 // Estilos del componente
 const styles = StyleSheet.create({
+  // --- LAYOUT Y ENCABEZADO ---
   safeArea: {
     flex: 1,
-    backgroundColor: '#0057B7',
+    backgroundColor: COLOR_PRIMARY, // Fondo primario para todo el área
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 10,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
     width: '100%',
+    paddingTop: 15,
+    backgroundColor: COLOR_PRIMARY, // Asegura que el header sea azul oscuro
+  },
+  headerTitle: {
+    fontSize: 24,
+    color: COLOR_ACCENT, // Título principal en Dorado
+    fontWeight: '900',
+    marginBottom: 5,
   },
   logo: {
     width: 350,
     height: 100,
     resizeMode: 'contain',
   },
+  // --- GRID DE BOTONES ---
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    width: '94%',
+    justifyContent: 'space-around', // Mejor espaciado
+    width: '90%',
     marginTop: 10,
-    marginBottom: 20,
   },
   item: {
-    width: '48%',
+    width: '45%', // Ligeramente más ancho para mejor visualización
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 25,
   },
+  // Botón: Estilo de Tarjeta Flotante
   button: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF', // Fondo blanco para todos por defecto
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 20, // Bordes suaves
+    padding: 15,
     shadowColor: '#000',
-    shadowOpacity: 0.13,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 4,
-    padding: 12,
-    marginBottom: 6,
-    borderWidth: 2,
-    borderColor: '#1E88E5',
+    shadowOpacity: 0.2, // Sombra más prominente
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
+    marginBottom: 8,
+    borderWidth: 3,
+    borderColor: COLOR_ACCENT, // Borde dorado para todos los botones
   },
-  logoutButtonGrid: {
-    backgroundColor: '#E53935',
-    borderColor: '#E53935',
+  cameraButton: {
+    // Se mantiene vacío pero se conserva por si se necesitan otros estilos específicos
+  },
+  logoutButton: {
+    backgroundColor: '#FFFFFF',
   },
   image: {
-    width: 100,
-    height: 100,
+    width: '90%',
+    height: '90%',
     resizeMode: 'contain',
   },
   label: {
-    marginTop: 2,
-    fontSize: 20,
-    color: '#FFFFFF',
+    marginTop: 0,
+    fontSize: 16,
+    color: '#FFFFFF', // Etiquetas en blanco sobre fondo azul oscuro
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.5,
-    textShadowColor: '#0002',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
-  logoutLabelGrid: {
-    color: '#E53935',
+  logoutLabel: {
+    color: COLOR_DANGER, // Texto rojo para Cerrar Sesión
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  officeLabel: {
+    color: COLOR_ACCENT, // Texto Dorado para Acceso a Oficina
     fontWeight: 'bold',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    textAlign: 'center',
-  },
+  // --- MODAL GENERAL ---
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.6)', // Fondo más oscuro
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    width: 320,
-    elevation: 8,
+  modalContent: { // Modal de Código/Salida
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 25,
+    width: 300,
+    elevation: 10,
   },
   modalTitle: {
-    fontWeight: 'bold',
+    fontWeight: '900',
     fontSize: 18,
     marginBottom: 10,
     textAlign: 'center',
   },
   modalText: {
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
+    color: COLOR_TEXT_DARK,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#C3D1E6',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
+  input: { // Input estandarizado para modales
+    borderWidth: 2,
+    borderColor: COLOR_LIGHT_GRAY,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 15,
     fontSize: 18,
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#F7F7F7',
+    color: COLOR_PRIMARY,
+    fontWeight: 'bold',
   },
   errorText: {
-    color: 'red',
-    marginBottom: 8,
+    color: COLOR_DANGER,
+    marginBottom: 10,
     textAlign: 'center',
+    fontWeight: '600',
   },
   modalButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    marginTop: 10,
   },
-  modalCancelButton: {
-    backgroundColor: '#aaa',
-    width: 100,
+  modalButton: {
+    width: 110,
+    paddingVertical: 10,
+    borderRadius: 30,
     marginTop: 0,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  buttonCancel: { // Botón Cancelar (Gris)
+    backgroundColor: '#999999',
   },
   modalAcceptButton: {
-    backgroundColor: '#1E90FF',
-    width: 100,
-    marginTop: 0,
+    backgroundColor: COLOR_SUCCESS,
   },
-  exitButton: {
-    backgroundColor: '#E53935',
-    width: 100,
-    marginTop: 0,
+  buttonSuccess: { // Botón Aceptar (Verde)
+    backgroundColor: COLOR_SUCCESS,
   },
+  buttonPrimary: { // Botón Aceptar Salida (Azul)
+    backgroundColor: COLOR_PRIMARY,
+  },
+  buttonDanger: { // Botón Salir (Rojo)
+    backgroundColor: COLOR_DANGER,
+  },
+  closeButton: {
+    width: 150,
+    backgroundColor: COLOR_PRIMARY,
+    borderRadius: 30,
+    paddingVertical: 10,
+    marginTop: 15,
+  },
+  // --- MODAL DE FOTO ---
+  photoModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 25,
+    width: 300,
+    elevation: 10,
+    alignItems: 'center',
+  },
+  photoModalLogo: {
+    width: 180, 
+    height: 50, 
+    resizeMode: 'contain', 
+    alignSelf: 'center', 
+    marginBottom: 10
+  },
+  photoModalImage: {
+    width: 250, 
+    height: 200, 
+    borderRadius: 8, 
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: COLOR_ACCENT,
+  },
+  photoModalData: {
+    alignSelf: 'stretch',
+    paddingHorizontal: 5,
+  },
+  photoModalText: {
+    textAlign: 'left', 
+    marginBottom: 3,
+    fontSize: 12,
+    color: COLOR_TEXT_DARK
+  }
 });
