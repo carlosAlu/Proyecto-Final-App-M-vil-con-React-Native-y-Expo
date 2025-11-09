@@ -10,31 +10,26 @@ import {
 } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
 
-// Lista de botones disponibles
+// Lista de botones disponibles (sin cambios en la data)
 const BUTTONS = [
   {
     id: 1,
-    label: 'Resis. Comp. Cilindros',
+    label: 'Resistencia a Compresión (Cilindros)',
     image: require('../assets/images/LogoCilindros.jpeg'),
   },
   {
     id: 2,
-    label: 'Resis. Comp. Vigas',
+    label: 'Resistencia a Flexión (Vigas)',
     image: require('../assets/images/LogoVigas.jpeg'),
   },
   {
     id: 3,
-    label: 'Resis. Comp. Morteros',
+    label: 'Resistencia a Compresión (Morteros)',
     image: require('../assets/images/LogoMorteros.jpeg'),
   },
-  // {
-  //   id: 4,
-  //   label: 'Resis. Comp. Pastillas',
-  //   image: require('../assets/images/LogoPastillas.jpeg'),
-  // },
   {
     id: 4,
-    label: 'Granulometria',
+    label: 'Granulometría',
     image: require('../assets/images/LogoGranulometrias.jpeg'),
   },
   {
@@ -59,12 +54,7 @@ export default function LaboratorioScreen() {
       router.push('/CalculosLaboratorio/Vigas');
     } else if (buttonIndex === 3) {
       router.push('/CalculosLaboratorio/Morteros');
-    }
-    // Ruta futura descomentable cuando esté disponible
-    // else if (buttonIndex === 4) {
-    //   router.push('/CalculosLaboratorio/Pastillas');
-    // }
-    else if (buttonIndex === 4) {
+    } else if (buttonIndex === 4) {
       router.push('/CalculosLaboratorio/Granulometrias');
     } else if (buttonIndex === 5) {
       router.push('/CalculosLaboratorio/Lavados');
@@ -80,8 +70,10 @@ export default function LaboratorioScreen() {
           source={require('../assets/images/LogoLasCaliforniasApp.png')}
           style={styles.logo}
         />
+        <Text style={styles.title}>Módulo de Laboratorio</Text>
+        <Text style={styles.subtitle}>Selecciona la prueba a realizar</Text>
       </View>
-      <Text style={styles.title}>Laboratorio</Text>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.grid}>
           {BUTTONS.map((btn) => (
@@ -89,9 +81,10 @@ export default function LaboratorioScreen() {
               <TouchableOpacity
                 style={styles.button}
                 onPress={() => handlePress(btn.id)}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
-                <Image source={btn.image} style={styles.image} />
+                {/* La imagen es la que tiene el 'margen' del color del botón */}
+                <Image source={btn.image} style={styles.image} /> 
               </TouchableOpacity>
               <Text style={styles.label}>{btn.label}</Text>
             </View>
@@ -105,78 +98,85 @@ export default function LaboratorioScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0057B7',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 24,
+    backgroundColor: '#F5F5F5',
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 6,
+    backgroundColor: '#003366', // Azul Oscuro
     width: '100%',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingTop: 40,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    marginBottom: 10,
+    elevation: 5,
   },
   logo: {
-    width: 320,
-    height: 90,
+    width: 300,
+    height: 80,
     resizeMode: 'contain',
+    marginBottom: 5,
   },
   title: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 26,
+    color: '#FFD700', // Dorado
+    fontWeight: '900',
     letterSpacing: 1,
-    marginBottom: 10,
-    textAlign: 'center',
+    marginTop: 5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#B0C4DE',
+    fontWeight: '500',
+    marginBottom: 5,
   },
   scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 20,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    width: '94%',
-    marginTop: 0,
-    marginBottom: 20,
   },
   item: {
-    width: '48%',
+    width: '47%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   button: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#FFFFFF',
+    // *** CAMBIO CLAVE AQUÍ: Azul Fuerte para el fondo del botón ***
+    backgroundColor: '#003366', 
+    // ************************
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 18,
-    padding: 12,
-    marginBottom: 6,
-    borderWidth: 2,
-    borderColor: '#1E88E5',
+    borderRadius: 20,
+    padding: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.13,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 0,
   },
   image: {
-    width: 150,
-    height: 150,
+    width: '90%',
+    height: '90%',
     resizeMode: 'contain',
+    borderRadius: 15,
+    // Aquí podemos añadir un borde blanco o dorado alrededor de la imagen si se desea
+    // borderWidth: 2, 
+    // borderColor: '#FFD700', 
   },
   label: {
-    marginTop: 2,
-    fontSize: 20,
-    color: '#FFFFFF',
+    marginTop: 8,
+    fontSize: 16,
+    color: '#333333',
     textAlign: 'center',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textShadowColor: '#0002',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    fontWeight: '700',
+    paddingHorizontal: 5,
   },
 });
