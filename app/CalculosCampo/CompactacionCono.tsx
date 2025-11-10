@@ -1,16 +1,16 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import { useNavigation } from 'expo-router';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
 } from 'react-native';
-import { useNavigation } from 'expo-router';
 
 // *** CONSTANTES DE MARCA ***
 const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
