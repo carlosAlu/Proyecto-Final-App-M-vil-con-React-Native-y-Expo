@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +20,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.cjimenez_20.LasCaliforniasApp"
+      "package": "com.cjimenez_20.LasCaliforniasApp",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +49,9 @@
       "eas": {
         "projectId": "3741e515-c479-4f55-8789-448577592fc4"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3741e515-c479-4f55-8789-448577592fc4"
+    }
   }
-}
 }

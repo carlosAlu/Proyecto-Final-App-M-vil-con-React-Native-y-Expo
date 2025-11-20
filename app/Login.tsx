@@ -84,7 +84,7 @@ export default function Login() {
         {/* Logo de la app con Círculo Flotante (Patrón CrearLogin) */}
         <View style={styles.logoCircle}>
           <Image
-            source={require('../assets/images/LogoLasCaliforniasApp.png')} // ¡CAMBIO AQUÍ!
+            source={require('../assets/images/LogoLogin.png')} // ¡CAMBIO AQUÍ!
             style={styles.logo}
           />
         </View>

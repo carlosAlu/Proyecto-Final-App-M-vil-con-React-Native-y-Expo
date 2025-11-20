@@ -317,7 +317,6 @@ const styles = StyleSheet.create({
     borderColor: COLOR_LIGHT_GRAY,
   },
   rowFinal: {
-    backgroundColor: '#FFFAE6', // Fondo ligeramente dorado/claro para la última fila
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     marginTop: 4,
@@ -353,7 +352,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cellResultFinal: {
-    color: COLOR_ACCENT, // Dorado para la columna de % Pasa final
+    color: COLOR_PRIMARY, // Dorado para la columna de % Pasa final
     fontWeight: '700',
   },
   finalLabel: {

@@ -1,14 +1,14 @@
 import { useNavigation } from 'expo-router';
-import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 // *** CONSTANTES DE MARCA (Para consistencia) ***
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   resultValue: {
-    color: COLOR_ACCENT, // Dorado para los valores calculados
+    color: COLOR_PRIMARY, // Dorado para los valores calculados
     fontWeight: '800',
     fontSize: 17,
     marginLeft: 5,
@@ -363,7 +363,6 @@ const styles = StyleSheet.create({
     borderColor: COLOR_LIGHT_GRAY,
   },
   rowFinal: {
-    backgroundColor: '#FFFAE6', // Fondo ligeramente dorado/claro para la última fila
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     marginTop: 4,
@@ -399,7 +398,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cellResultFinal: {
-    color: COLOR_ACCENT, // Dorado para la columna de % Pasa final
+    color: COLOR_PRIMARY, // Dorado para la columna de % Pasa final
     fontWeight: '700',
   },
   finalLabel: {

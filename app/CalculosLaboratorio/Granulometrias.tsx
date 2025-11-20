@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   resultValue: {
-    color: COLOR_ACCENT, // Dorado para los valores calculados
+    color: COLOR_PRIMARY, // Negro para los valores calculados (peso neto y peso volumétrico)
     fontWeight: '800',
     fontSize: 17,
     marginLeft: 5,
