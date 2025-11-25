@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   // Etiqueta de resultado final
   resultLabelFinal: {
     color: COLOR_PRIMARY,
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
   },
   // Valor de resultado (la cifra)

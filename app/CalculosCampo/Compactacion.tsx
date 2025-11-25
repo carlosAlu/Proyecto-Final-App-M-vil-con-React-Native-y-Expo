@@ -1,6 +1,7 @@
 import { useNavigation } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -85,7 +86,9 @@ export default function Compactacion() {
       isNaN(v4) || isNaN(v5) || isNaN(v6) ||
       v4 <= 0 || v6 <= 0
     ) {
-      setError('Por favor ingresa valores válidos y positivos en todos los campos requeridos.');
+      const mensaje = 'Por favor ingresa valores válidos y positivos en todos los campos requeridos.';
+      setError(mensaje);
+      Alert.alert('Error',mensaje)
       return;
     }
     

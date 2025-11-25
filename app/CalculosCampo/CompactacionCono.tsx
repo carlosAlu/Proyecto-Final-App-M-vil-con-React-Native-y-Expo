@@ -1,6 +1,7 @@
 import { useNavigation } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -85,10 +86,11 @@ export default function CompactacionCono() {
       isNaN(v4) || isNaN(v5) || isNaN(v6) ||
       v4 <= 0 || v6 <= 0
     ) {
-      setError('Por favor ingresa valores válidos y positivos en todos los campos requeridos.');
-      return;
-    }
-
+          const mensaje = 'Por favor ingresa valores válidos y positivos en todos los campos requeridos.';
+          setError(mensaje);
+          Alert.alert('Error',mensaje)
+          return;
+        }
     // --- CÁLCULOS ---
     
     // 1. Peso utilizado de arena: P_arena = P_inicial - P_sobrante

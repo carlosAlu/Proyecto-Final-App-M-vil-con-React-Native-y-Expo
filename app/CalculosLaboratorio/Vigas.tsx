@@ -341,17 +341,17 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopWidth: 2,
     borderTopColor: COLOR_ACCENT, // Separador final dorado
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
   },
   resultLabelFinal: {
     color: COLOR_PRIMARY,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
   },
   resultValueFinal: {
     color: COLOR_ERROR, // Color de alto impacto para el valor clave
     fontWeight: '900',
-    fontSize: 24,
+    fontSize: 18,
   },
   // Error: Estilo de error de marca
   errorText: {
