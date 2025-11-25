@@ -297,6 +297,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0', // Separador sutil
+    flexWrap: 'wrap',
   },
   finalResultRow: {
     marginTop: 15,
@@ -310,30 +311,38 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontSize: 16,
     fontWeight: '500',
+    flex: 1,
   },
   // Nuevo: Etiqueta de resultado final
   resultLabelFinal: {
     color: COLOR_PRIMARY,
     fontSize: 18,
     fontWeight: '700',
+    flex: 1,
   },
   // Modificado: Valor de resultado (la cifra)
   resultValue: {
     color: COLOR_PRIMARY, // Azul oscuro
     fontWeight: '600',
     fontSize: 17,
+    flex: 1,
+    textAlign: 'right',
   },
   // Nuevo: Valor de resistencia simple
   resultValueMajor: {
     color: COLOR_PRIMARY, // Azul Oscuro
     fontWeight: '700',
     fontSize: 18,
+    flex: 1,
+    textAlign: 'right',
   },
   // Nuevo: Valor de resultado final (el porcentaje)
   resultValueFinal: {
     color: COLOR_ERROR, // Rojo fuerte para el valor importante
     fontWeight: '900', // Muy negrita
     fontSize: 24, // ¡Destacado!
+    flex: 1,
+    textAlign: 'right',
   },
   // Mejorado: Error en color de marca
   errorText: {
