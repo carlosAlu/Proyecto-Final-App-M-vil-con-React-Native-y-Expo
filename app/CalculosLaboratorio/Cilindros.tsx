@@ -297,6 +297,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0', // Separador sutil
+    flexWrap: 'wrap',
   },
   finalResultRow: {
     marginTop: 15,
@@ -304,6 +305,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderTopColor: COLOR_ACCENT, // Separador final dorado
     borderBottomWidth: 0,
+    flexWrap: 'wrap',
   },
   // Nuevo: Etiqueta de resultado (texto normal)
   resultLabel: {

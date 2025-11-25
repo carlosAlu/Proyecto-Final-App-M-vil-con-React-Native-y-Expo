@@ -1,16 +1,16 @@
+import { useNavigation } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView, // Añadido para mejor manejo del área segura
 } from 'react-native';
-import { useNavigation } from 'expo-router';
 
 // *** CONSTANTES DE MARCA ***
 const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
@@ -90,7 +90,14 @@ export default function Vigas() {
                 style={[styles.selector, tipo === 'centro' && styles.selectorSelected]}
                 onPress={() => setTipo('centro')}
               >
-                <Text style={styles.selectorSubtext}>Ruptura al Centro</Text>
+                <Text
+                  style={[
+                    styles.selectorSubtext,
+                    tipo === 'centro' && styles.selectorSubtextSelected
+                  ]}
+                >
+                  Ruptura al Centro
+                </Text>
                 <Text
                   style={[
                     styles.selectorText,
@@ -104,7 +111,14 @@ export default function Vigas() {
                 style={[styles.selector, tipo === 'lateral' && styles.selectorSelected]}
                 onPress={() => setTipo('lateral')}
               >
-                <Text style={styles.selectorSubtext}>Ruptura Lateral</Text>
+                <Text
+                  style={[
+                    styles.selectorSubtext,
+                    tipo === 'lateral' && styles.selectorSubtextSelected
+                  ]}
+                >
+                  Ruptura Lateral
+                </Text>
                 <Text
                   style={[
                     styles.selectorText,
@@ -181,6 +195,9 @@ const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
     backgroundColor: COLOR_BACKGROUND,
+  },
+  selectorSubtextSelected: {
+  color: '#FFFFFF',
   },
   container: {
     flexGrow: 1,
@@ -324,10 +341,11 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopWidth: 2,
     borderTopColor: COLOR_ACCENT, // Separador final dorado
+    flexWrap: 'wrap',
   },
   resultLabelFinal: {
     color: COLOR_PRIMARY,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
   },
   resultValueFinal: {

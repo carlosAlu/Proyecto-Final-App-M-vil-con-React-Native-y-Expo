@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    flexWrap: 'wrap',
   },
   finalResultRow: {
     flexDirection: 'row',
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopWidth: 2,
     borderTopColor: COLOR_ACCENT, // Separador final dorado
+    flexWrap: 'wrap',
   },
   // Etiqueta de resultado (texto normal)
   resultLabel: {
