@@ -385,6 +385,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#FFEBEE',
     borderRadius: 8,
-    textAlign: 'right',
+    textAlign: 'center',
   },
 });
