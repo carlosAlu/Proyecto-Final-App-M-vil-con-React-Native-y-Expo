@@ -1,16 +1,16 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import { useNavigation } from 'expo-router';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
 } from 'react-native';
-import { useNavigation } from 'expo-router';
 
 // *** CONSTANTES DE MARCA ***
 const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
@@ -334,6 +334,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    flexWrap: 'wrap',
   },
   finalResultRow: {
     flexDirection: 'row',
@@ -347,20 +348,24 @@ const styles = StyleSheet.create({
   // Etiqueta de resultado (texto normal)
   resultLabel: {
     color: '#333333',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
+    flex: 1,
   },
   // Etiqueta de resultado final
   resultLabelFinal: {
     color: COLOR_PRIMARY,
     fontSize: 18,
     fontWeight: '700',
+    flex: 1,
   },
   // Valor de resultado (la cifra)
   resultValue: {
     color: COLOR_PRIMARY,
     fontWeight: '700',
-    fontSize: 17,
+    fontSize: 14,
+    flex: 1,
+    textAlign: 'right',
   },
   // Valor de resultado final (el porcentaje)
   resultValueFinal: {
@@ -376,6 +381,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#FFEBEE',
     borderRadius: 8,
-    textAlign: 'center',
+    textAlign: 'right',
   },
 });
