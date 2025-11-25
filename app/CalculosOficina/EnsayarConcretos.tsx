@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, SafeAreaView } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // *** CONSTANTES DE MARCA ***
 const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
@@ -55,72 +55,137 @@ export default function EnsayarConcretos() {
     }, [navigation]);
 
     // Función para guardar el ensaye (SIN CAMBIOS FUNCIONALES)
-    const guardarEnsaye = async () => {
-        try {
-            // Validar rango de especímenes
-            const cantidad = parseInt(noEspecimenes, 10) || 1;
-            if (cantidad < 1 || cantidad > 5) {
-                Alert.alert('Error', 'El número de especímenes debe ser entre 1 y 5.');
+
+    // Valida formato dd/mm/aaaa y que la fecha sea >= hoy
+    const fechaEsValida = (fechaStr: string) => {
+        const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        const match = fechaStr.match(regex);
+        if (!match) return false;
+
+        const dia = parseInt(match[1], 10);
+        const mes = parseInt(match[2], 10) - 1; // meses inician en 0
+        const año = parseInt(match[3], 10);
+
+        const fecha = new Date(año, mes, dia);
+        if (
+            fecha.getFullYear() !== año ||
+            fecha.getMonth() !== mes ||
+            fecha.getDate() !== dia
+        ) {
+            return false; // fecha inexistente (ej: 32/15/2025)
+        }
+
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        fecha.setHours(0, 0, 0, 0);
+
+        return fecha >= hoy;
+    };
+const guardarEnsaye = async () => {
+    try {
+        // ---- VALIDACIONES DE CAMPOS OBLIGATORIOS ----
+        const camposObligatorios = [
+            { valor: obra, nombre: "Obra" },
+            { valor: claveReporte, nombre: "Clave del reporte" },
+            { valor: fecha, nombre: "Fecha" },
+            { valor: noMuestra, nombre: "Número de muestra" },
+            { valor: noEspecimenes, nombre: "Número de especímenes" },
+            { valor: tipoEspecimen, nombre: "Tipo de espécimen" },
+            { valor: elementoColado, nombre: "Elemento colado" },
+            { valor: fc, nombre: "F'c" },
+            { valor: diasRuptura, nombre: "Días para ruptura" },
+            { valor: revenimientoProyecto, nombre: "Revenimiento del proyecto" },
+            { valor: revenimientoObra, nombre: "Revenimiento en obra" },
+            { valor: temperaturaConcreto, nombre: "Temperatura del concreto" },
+            { valor: temperaturaAmbiente, nombre: "Temperatura ambiente" },
+            { valor: nombreConcretera, nombre: "Nombre de la concretera" },
+            { valor: noRemision, nombre: "No. de remisión" },
+            { valor: camionRevolvedor, nombre: "Camión revolvedor" },
+            { valor: equipoMezclado, nombre: "Equipo de mezclado" },
+            { valor: claveEquipoUtilizado, nombre: "Clave del equipo utilizado" },
+            { valor: vibradorUtilizado, nombre: "Vibrador utilizado" },
+            { valor: cementoMarcaTipo, nombre: "Cemento marca y tipo" },
+            { valor: aditivo, nombre: "Aditivo" },
+            { valor: horaInicioColado, nombre: "Hora de inicio del colado" },
+            { valor: horaTerminoColado, nombre: "Hora de término del colado" },
+            { valor: horaElaboracionEspecimen, nombre: "Hora de elaboración del espécimen" },
+        ];
+
+        for (let campo of camposObligatorios) {
+            if (!campo.valor || campo.valor.trim() === "") {
+                Alert.alert("Campo faltante", `Debes llenar: ${campo.nombre}.`);
+                return; // Detener guardado
+            }
+            if (!fechaEsValida(fecha)) {
+                Alert.alert(
+                    "Fecha inválida",
+                    "La fecha debe estar en formato dd/mm/aaaa y no puede ser anterior al día de hoy."
+                );
                 return;
             }
-
-            // Obtener el último ID de EnsayesConcreto y EnsayesSuelos
-            const lastIdConcretoStr = await AsyncStorage.getItem('EnsayesConcreto_lastId');
-            const lastIdConcreto = lastIdConcretoStr ? parseInt(lastIdConcretoStr, 10) : 0;
-
-            const lastIdSuelosStr = await AsyncStorage.getItem('EnsayesSuelos_lastId');
-            const lastIdSuelos = lastIdSuelosStr ? parseInt(lastIdSuelosStr, 10) : 0;
-
-            // Usar el mayor de ambos y sumarle 1
-            let newId = Math.max(lastIdConcreto, lastIdSuelos) + 1;
-
-            // Obtener la tabla actual
-            const tablaStr = await AsyncStorage.getItem('EnsayesConcreto');
-            const tabla = tablaStr ? JSON.parse(tablaStr) : [];
-
-            // Guardar cada espécimen con un ID único
-            for (let i = 0; i < cantidad; i++) {
-                const datos = {
-                    id: newId,
-                    obra, claveReporte, fecha, noMuestra, noEspecimenes, noRemision,
-                    elementoColado, fc, revenimientoProyecto, revenimientoObra,
-                    equipoMezclado, nombreConcretera, cementoMarcaTipo, aditivo,
-                    vibradorUtilizado, claveEquipoUtilizado, diasRuptura,
-                    horaInicioColado, horaTerminoColado, horaElaboracionEspecimen,
-                    camionRevolvedor, temperaturaConcreto, temperaturaAmbiente,
-                    tipoEspecimen,
-                };
-                tabla.push(datos);
-                newId++;
-            }
-
-            // Guardar la tabla y el nuevo lastId
-            await AsyncStorage.setItem('EnsayesConcreto', JSON.stringify(tabla));
-            await AsyncStorage.setItem('EnsayesConcreto_lastId', (newId - 1).toString());
-
-            // Mostrar alerta con el rango de ensayes
-            const primerId = newId - cantidad;
-            const ultimoId = newId - 1;
-            Alert.alert(
-                '¡Guardado!',
-                cantidad === 1
-                    ? `El número de ensaye es: ${primerId}`
-                    : `Los números de ensaye son: ${primerId} al ${ultimoId}`
-            );
-
-            // Limpiar los campos después de guardar
-            setObra(''); setClaveReporte(''); setFecha(''); setNoMuestra('');
-            setNoEspecimenes(''); setNoRemision(''); setElementoColado('');
-            setFc(''); setRevenimientoProyecto(''); setRevenimientoObra('');
-            setEquipoMezclado(''); setNombreConcretera(''); setCementoMarcaTipo('');
-            setAditivo(''); setVibradorUtilizado(''); setClaveEquipoUtilizado('');
-            setDiasRuptura(''); setHoraInicioColado(''); setHoraTerminoColado('');
-            setHoraElaboracionEspecimen(''); setCamionRevolvedor('');
-            setTemperaturaConcreto(''); setTemperaturaAmbiente(''); setTipoEspecimen('');
-        } catch (error) {
-            Alert.alert('Error', 'No se pudo guardar el ensaye.');
         }
-    };
+
+        // ---- VALIDAR RANGO DE ESPECÍMENES ----
+        const cantidad = parseInt(noEspecimenes, 10) || 1;
+        if (cantidad < 1 || cantidad > 5) {
+            Alert.alert('Error', 'El número de especímenes debe ser entre 1 y 5.');
+            return;
+        }
+
+        // ---- OBTENER ÚLTIMO ID ----
+        const lastIdConcretoStr = await AsyncStorage.getItem('EnsayesConcreto_lastId');
+        const lastIdConcreto = lastIdConcretoStr ? parseInt(lastIdConcretoStr, 10) : 0;
+
+        const lastIdSuelosStr = await AsyncStorage.getItem('EnsayesSuelos_lastId');
+        const lastIdSuelos = lastIdSuelosStr ? parseInt(lastIdSuelosStr, 10) : 0;
+
+        let newId = Math.max(lastIdConcreto, lastIdSuelos) + 1;
+
+        // ---- OBTENER TABLA ----
+        const tablaStr = await AsyncStorage.getItem('EnsayesConcreto');
+        const tabla = tablaStr ? JSON.parse(tablaStr) : [];
+
+        // ---- GUARDAR CADA ESPECIMEN ----
+        for (let i = 0; i < cantidad; i++) {
+            tabla.push({
+                id: newId,
+                obra, claveReporte, fecha, noMuestra, noEspecimenes, noRemision,
+                elementoColado, fc, revenimientoProyecto, revenimientoObra,
+                equipoMezclado, nombreConcretera, cementoMarcaTipo, aditivo,
+                vibradorUtilizado, claveEquipoUtilizado, diasRuptura,
+                horaInicioColado, horaTerminoColado, horaElaboracionEspecimen,
+                camionRevolvedor, temperaturaConcreto, temperaturaAmbiente,
+                tipoEspecimen,
+            });
+            newId++;
+        }
+
+        await AsyncStorage.setItem('EnsayesConcreto', JSON.stringify(tabla));
+        await AsyncStorage.setItem('EnsayesConcreto_lastId', (newId - 1).toString());
+
+        const primerId = newId - cantidad;
+        const ultimoId = newId - 1;
+
+        Alert.alert(
+            '¡Guardado!',
+            cantidad === 1
+                ? `El número de ensaye es: ${primerId}`
+                : `Los números de ensaye son: ${primerId} al ${ultimoId}`
+        );
+
+        // ---- LIMPIAR CAMPOS ----
+        setObra(''); setClaveReporte(''); setFecha(''); setNoMuestra('');
+        setNoEspecimenes(''); setNoRemision(''); setElementoColado('');
+        setFc(''); setRevenimientoProyecto(''); setRevenimientoObra('');
+        setEquipoMezclado(''); setNombreConcretera(''); setCementoMarcaTipo('');
+        setAditivo(''); setVibradorUtilizado(''); setClaveEquipoUtilizado('');
+        setDiasRuptura(''); setHoraInicioColado(''); setHoraTerminoColado('');
+        setHoraElaboracionEspecimen(''); setCamionRevolvedor('');
+        setTemperaturaConcreto(''); setTemperaturaAmbiente(''); setTipoEspecimen('');
+    } catch (error) {
+        Alert.alert('Error', 'No se pudo guardar el ensaye.');
+    }
+};
 
     // Nueva función para limitar el valor de noEspecimenes (lógica simplificada)
     const handleNoEspecimenesChange = (text: string) => {
