@@ -1,7 +1,7 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform, Alert, SafeAreaView } from 'react-native';
-import { useNavigation } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from 'expo-router';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // *** CONSTANTES DE MARCA ***
 const COLOR_PRIMARY = '#003366'; // Azul Oscuro de Marca
@@ -38,52 +38,89 @@ export default function EnsayarSuelos() {
   // Función de limpieza para inputs de texto (no numéricos)
   const cleanTextInput = (text: string) => text;
 
+  // Verifica si un texto contiene solo números o es vacío
+  const isOnlyNumbers = (text: string) => {
+    return /^[0-9]+$/.test(text);
+  };
+
+
   // Función para guardar el ensayo (SIN CAMBIOS FUNCIONALES)
   const guardarEnsayo = async () => {
-    try {
-      // Obtener el último ID de ambas tablas
-      const lastIdSuelosStr = await AsyncStorage.getItem('EnsayesSuelos_lastId');
-      const lastIdConcretoStr = await AsyncStorage.getItem('EnsayesConcreto_lastId');
-      const lastIdSuelos = lastIdSuelosStr ? parseInt(lastIdSuelosStr, 10) : 0;
-      const lastIdConcreto = lastIdConcretoStr ? parseInt(lastIdConcretoStr, 10) : 0;
-      const newId = Math.max(lastIdSuelos, lastIdConcreto) + 1;
+  try {
+    // --- VALIDACIONES ---
 
-      // Crear el objeto de datos
-      const datos = {
-        id: newId,
-        fecha,
-        obra,
-        cliente,
-        muestra,
-        ubicacion,
-        tecnico,
-      };
+    // Validar fecha (que no sea menor a hoy)
+    const today = new Date(getToday());
+    const inputDate = new Date(fecha);
 
-      // Obtener la tabla actual
-      const tablaStr = await AsyncStorage.getItem('EnsayesSuelos');
-      const tabla = tablaStr ? JSON.parse(tablaStr) : [];
-
-      // Agregar el nuevo registro
-      tabla.push(datos);
-
-      // Guardar la tabla y el nuevo lastId
-      await AsyncStorage.setItem('EnsayesSuelos', JSON.stringify(tabla));
-      await AsyncStorage.setItem('EnsayesSuelos_lastId', newId.toString());
-
-      // Mostrar alerta con el número de ensayo
-      Alert.alert('¡Guardado!', `El número de ensayo es: ${newId}`);
-
-      // Limpiar los campos después de guardar (fecha se vuelve a poner la actual)
-      setFecha(getToday());
-      setObra('');
-      setCliente('');
-      setMuestra('');
-      setUbicacion('');
-      setTecnico('');
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo guardar el ensayo.');
+    if (inputDate < today) {
+      Alert.alert("Fecha inválida", "La fecha no puede ser menor al día de hoy.");
+      return;
     }
-  };
+
+    // Validar campos vacíos
+    if (!obra || !cliente || !muestra || !ubicacion || !tecnico) {
+      Alert.alert("Campos incompletos", "Todos los campos deben estar llenos.");
+      return;
+    }
+
+    // Validar que los textos NO sean solo números
+    const campos = [
+      { label: "Obra", value: obra },
+      { label: "Cliente", value: cliente },
+      { label: "Muestra", value: muestra },
+      { label: "Ubicación", value: ubicacion },
+      { label: "Técnico", value: tecnico },
+    ];
+
+    for (const campo of campos) {
+      if (isOnlyNumbers(campo.value)) {
+        Alert.alert(
+          "Dato inválido",
+          `${campo.label} no puede contener solo números.`
+        );
+        return;
+      }
+    }
+
+    // -----------------------------------------------
+
+    const lastIdSuelosStr = await AsyncStorage.getItem('EnsayesSuelos_lastId');
+    const lastIdConcretoStr = await AsyncStorage.getItem('EnsayesConcreto_lastId');
+    const lastIdSuelos = lastIdSuelosStr ? parseInt(lastIdSuelosStr, 10) : 0;
+    const lastIdConcreto = lastIdConcretoStr ? parseInt(lastIdConcretoStr, 10) : 0;
+    const newId = Math.max(lastIdSuelos, lastIdConcreto) + 1;
+
+    const datos = {
+      id: newId,
+      fecha,
+      obra,
+      cliente,
+      muestra,
+      ubicacion,
+      tecnico,
+    };
+
+    const tablaStr = await AsyncStorage.getItem('EnsayesSuelos');
+    const tabla = tablaStr ? JSON.parse(tablaStr) : [];
+
+    tabla.push(datos);
+
+    await AsyncStorage.setItem('EnsayesSuelos', JSON.stringify(tabla));
+    await AsyncStorage.setItem('EnsayesSuelos_lastId', newId.toString());
+
+    Alert.alert('¡Guardado!', `El número de ensayo es: ${newId}`);
+
+    setFecha(getToday());
+    setObra('');
+    setCliente('');
+    setMuestra('');
+    setUbicacion('');
+    setTecnico('');
+  } catch (error) {
+    Alert.alert('Error', 'No se pudo guardar el ensayo.');
+  }
+};
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLOR_PRIMARY }}>
