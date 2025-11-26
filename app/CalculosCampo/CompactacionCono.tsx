@@ -360,8 +360,6 @@ const styles = StyleSheet.create({
     color: COLOR_PRIMARY,
     fontSize: 18,
     fontWeight: '700',
-    flex: 1,
-    textAlign: 'right',
   },
   // Valor de resultado (la cifra)
   resultValue: {
